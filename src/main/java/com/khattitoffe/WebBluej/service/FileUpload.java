@@ -4,14 +4,16 @@ import java.io.IOException;
 import org.springframework.web.multipart.MultipartFile;
 
 public class FileUpload {
-    MultipartFile file=null;
-
-    public FileUpload(MultipartFile file) {
+    private MultipartFile file=null;
+    private String username=null;
+    public FileUpload(MultipartFile file, String username) {
         this.file = file;
+        this.username = username;
     }
 
     public boolean uploadJavaFile() {
-        String fileDir="E:/Spring Boot/data/src/java/";
+        String fileDir="E:/Spring Boot/data/src/java/"+username+"/";
+
         String filename=file.getOriginalFilename();
 
         try{

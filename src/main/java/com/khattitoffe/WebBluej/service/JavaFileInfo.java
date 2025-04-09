@@ -20,12 +20,13 @@ public class JavaFileInfo implements FileInfo{
     private HashMap<String,String> methodsName=new HashMap<>(); // all methods
     private ArrayList<String> interfaceName=new ArrayList<>(); // all interface it implements
     private HashMap<String,String> objectRefernces=new HashMap<>();
+    private String username;
 
 
-
-    public JavaFileInfo(String fileName){
+    public JavaFileInfo(String fileName,String username){
         this.fileName=fileName+".java";
-        file=new File(fileLoaction+this.fileName);
+        this.username=username;
+        file=new File(fileLoaction+username+"/"+this.fileName);
 
         initialize();
         extractInfo();

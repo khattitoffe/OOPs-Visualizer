@@ -1,4 +1,7 @@
 package com.khattitoffe.WebBluej.controller;
+import com.khattitoffe.WebBluej.service.JWTUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.khattitoffe.WebBluej.service.FileUpload;import com.khattitoffe.WebBluej.service.JavaFileInfo;
 import com.khattitoffe.WebBluej.entity.JavaFile;import com.khattitoffe.WebBluej.entity.JavaFileName;
@@ -10,10 +13,18 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/file")
 public class FileController {
+    @Autowired
+    JWTUtil jwtUtil;
 
     @PostMapping("/uploadJava")
-    public ResponseEntity<String> uploadJavaFile(@RequestParam("file") MultipartFile file) {
-
+    public ResponseEntity<String> uploadJavaFile(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+            String username=null;
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                username = jwtUtil.extractUsername(token);
+                System.out.println("username: "+username);
+            }
             if(file.isEmpty()) // file non empty honi chahiye
                 return ResponseEntity.badRequest().body("Empty file uploaded");
             try {
@@ -26,8 +37,8 @@ public class FileController {
             }
             // locally storing the file
 
-        FileUpload upload = new FileUpload(file);
-            //using fileupload service
+        FileUpload upload = new FileUpload(file,username);
+        //using fileupload service
         if(upload.uploadJavaFile())
             return ResponseEntity.ok().body("Uploaded File successfully");
         else
@@ -36,12 +47,20 @@ public class FileController {
     }
 
     @PostMapping("/getJavaFileInfo")
-    public JavaFile getInfo(@RequestBody JavaFileName fileName) {
+    public JavaFile getInfo(@RequestBody JavaFileName fileName, HttpServletRequest request) {
+        String username=null;
+
         System.out.println("Filename " + fileName.getjavaFileName());
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            username = jwtUtil.extractUsername(token);
+            System.out.println("username: "+username);
+        }
 
         String javaFile=fileName.getjavaFileName();
         System.out.println(javaFile);
-        JavaFileInfo info=new JavaFileInfo(javaFile);
+        JavaFileInfo info=new JavaFileInfo(javaFile,username);
 
         return new JavaFile(info.getClassName(),info.getMethodNames(),info.getSuperClassName(),info.getSuperInterfaceName(),info.getObjectReferences());
     }
