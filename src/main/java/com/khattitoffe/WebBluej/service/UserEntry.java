@@ -3,6 +3,7 @@ import com.khattitoffe.WebBluej.entity.UserData;
 import com.khattitoffe.WebBluej.entity.UserLogin;
 import com.khattitoffe.WebBluej.repository.CreateUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -13,9 +14,17 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserEntry {
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private CreateUserRepo createUserRepo;
 
     public boolean saveUser(UserData user) {
+
+        String password = user.getPassword();
+        String bcryptPassword=passwordEncoder.encode(password);
+        user.setPassword(bcryptPassword);
+
         try {
             createUserRepo.save(user);
             return true;
