@@ -1,9 +1,16 @@
 package com.khattitoffe.WebBluej.service;
 import java.util.Date;
+
+import com.khattitoffe.WebBluej.repository.CreateUserRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.*;
 @Component
 public class JWTUtil {
+
+    @Autowired
+    private CreateUserRepo createUserRepo;
+
     private String secretKey="myapplication@4bahujd*(@!6ye9182";
     private long expiration =1000*60*60*12;
 
@@ -31,4 +38,11 @@ public class JWTUtil {
     public boolean validateToken(String token,String username){
         return extractUsername(token).equals(username) && !isTokenExpired(token);
     }
+
+    public boolean validateToken(String token){
+        String username=extractUsername(token);
+        return createUserRepo.existsByusername(username);
+    }
+
+
 }
