@@ -1,6 +1,10 @@
 package com.khattitoffe.WebBluej.controller;
 import com.khattitoffe.WebBluej.entity.UserData;
 import com.khattitoffe.WebBluej.entity.UserLogin;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import com.khattitoffe.WebBluej.service.UserEntry;
 import org.springframework.http.ResponseEntity;
@@ -15,23 +19,41 @@ public class UserController {
     private UserEntry db;
 
     @PostMapping("/signUp")
-    public ResponseEntity<String> createUser(@RequestBody UserData user)
+    public ResponseEntity<?> createUser(@RequestBody UserData user)
     {
         if(!db.verifyEmail((user))) // verrifies email and checks if its already in db or not
-            return ResponseEntity.badRequest().body("Invalid email");
+           {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Invalid email");
+            return ResponseEntity.badRequest().body(response);
+            }
 
         if(db.saveUser(user))
-            return ResponseEntity.ok("User Created " + user.getUsername());
+        {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User Created " + user.getUsername());
+            return ResponseEntity.ok(response);
+        }
         else
-            return ResponseEntity.badRequest().body("User already exists");
+        {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User already exists");
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserLogin user)
+    public ResponseEntity<?> login(@RequestBody UserLogin user)
     {
         if(db.userExists(user))
-            return ResponseEntity.ok().body("Login Successful");
-        return ResponseEntity.badRequest().body("Invalid username or password");
+           { 
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Login Successful");
+            return ResponseEntity.ok(response);
+         }
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Invalid Username or Password");
+        return ResponseEntity.badRequest().body(response);
+        //return ResponseEntity.badRequest().body("Invalid username or password");
     }
-
 }

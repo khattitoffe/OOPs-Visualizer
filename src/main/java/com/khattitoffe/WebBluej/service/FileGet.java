@@ -1,32 +1,64 @@
 package com.khattitoffe.WebBluej.service;
-import org.springframework.stereotype.Service;
-
-import java.io.File;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 
+import org.springframework.stereotype.Service;
+
 @Service
-public class FileGet{
-    private ArrayList<File> files=new ArrayList<>();
-    private HashMap<String,String> classes=new HashMap<>();
+public class FileGet {
 
-    public HashMap<String, String> getClasses(String username) throws IOException
-    {
-        String fileDir="E:/Spring Boot/data/src/java/"+username+"/";
-        File dir=new File(fileDir);
+    private final String bucketName = "myprojectjavafiles"; 
+    private S3Client s3=null;
 
-        String[] files=dir.list();
-        File Class=null;
-        String classContent="";
-        for(String file:files)
-        {
-            Class=new File(fileDir+file);
-            classContent= Files.readString(Class.toPath());
-            classes.put(file,classContent);
+
+    public HashMap<String, String> getClasses(String email,S3Client s3) throws IOException {
+        this.s3=s3;
+
+        HashMap<String, String> classes = new HashMap<>();
+
+
+        ListObjectsV2Request listReq = ListObjectsV2Request.builder()
+                .bucket(bucketName)
+                .prefix(email) 
+                .build();
+
+        ListObjectsV2Response listRes = s3.listObjectsV2(listReq);
+
+        for (S3Object s3Object : listRes.contents()) {
+            String key = s3Object.key();
+
+            // check for .java files
+            if (!key.endsWith(".java")) continue;
+
+            GetObjectRequest getReq = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(s3.getObject(getReq)))) {
+
+                StringBuilder content = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+
+                String filename = key.substring(email.length());
+                classes.put(filename, content.toString());
+            }
         }
 
         return classes;
     }
 }
+

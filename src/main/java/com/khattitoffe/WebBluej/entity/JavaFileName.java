@@ -11,6 +11,6 @@ public class JavaFileName {
         return javaFileName;
     }
     public void setJavaFileName(String JavaFileName) {
-        this.javaFileName = javaFileName;
+        this.javaFileName = JavaFileName;
     }
 }

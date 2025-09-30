@@ -1,27 +1,30 @@
 package com.khattitoffe.WebBluej.entity;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.amazonaws.services.dynamodbv2.datamodeling.*;
 
-@Document(collection="user_credentials")
+@DynamoDBTable(tableName = "user_details_webCOMPILER")
 public class UserData {
 
-    @Id
     private String email;
     private String username;
     private String password;
 
+    @DynamoDBHashKey(attributeName = "email")
     public String getEmail() {
         return email;
     }
     public void setEmail(String email) {
         this.email = email;
     }
+
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "username-index", attributeName = "username")
     public String getUsername() {
         return username;
     }
     public void setUsername(String username) {
         this.username = username;
     }
+
+    @DynamoDBAttribute(attributeName = "password")
     public String getPassword() {
         return password;
     }

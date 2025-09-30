@@ -1,7 +1,6 @@
 package com.khattitoffe.WebBluej.service;
 import com.khattitoffe.WebBluej.entity.UserData;
 import com.khattitoffe.WebBluej.entity.UserLogin;
-import com.khattitoffe.WebBluej.repository.CreateUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -9,7 +8,7 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.khattitoffe.WebBluej.repository.DynamoDbRepo;
 @Service
 public class UserEntry {
 
@@ -17,7 +16,7 @@ public class UserEntry {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private CreateUserRepo createUserRepo;
+    private DynamoDbRepo dynamoDB;
 
     public boolean saveUser(UserData user) {
 
@@ -26,7 +25,7 @@ public class UserEntry {
         user.setPassword(bcryptPassword);
 
         try {
-            createUserRepo.save(user);
+            dynamoDB.addUser(user);
             return true;
         } catch (Exception e) {
             return false;
@@ -40,6 +39,7 @@ public class UserEntry {
             return true;
         return false;
     }
+        
     */
     // email vvalidation.. takees email and then verify if it is valid or not using javax.mail lib
     public boolean verifyEmail(UserData user){
@@ -47,12 +47,9 @@ public class UserEntry {
             InternetAddress eAddress = new InternetAddress(user.getEmail());
             eAddress.validate();// vverifies email if invalid throws addressexception
 
-            if(createUserRepo.existsByemail(user.getEmail()))
+            if(dynamoDB.userExists(user.getEmail()))
                 // if email is already in DB throws exception
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Email already exists");
-
-            if(createUserRepo.existsByusername(user.getUsername()))
-               throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Username already exists");
 
             return true; // returns true jab username is not existing in db and too
         }
@@ -63,10 +60,20 @@ public class UserEntry {
 
     public boolean userExists(UserLogin user)
     {
-        if(createUserRepo.existsByusername(user.getUsername()))
+        System.out.println("emial"+user.getEmail());
+        if(dynamoDB.userExists(user.getEmail()))
         {
-            UserData userDB= createUserRepo.findByusername(user.getUsername());// not completed yet
-            if(userDB.getPassword().equals(user.getPassword())) {
+            UserData userDB= dynamoDB.getUserByEmail(user.getEmail());// not completed yet
+
+            String password = user.getPassword();
+            //System.out.println("user pass"+password);
+            //String bcryptPassword=passwordEncoder.encode(password);
+            //System.out.println("user pass"+bcryptPassword);
+
+            boolean matches=passwordEncoder.matches(password, userDB.getPassword());
+
+            if(matches) {
+                System.out.println("login success");
                 return true;
             }
         }

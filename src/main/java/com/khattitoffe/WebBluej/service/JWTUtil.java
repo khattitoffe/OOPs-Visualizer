@@ -1,7 +1,6 @@
 package com.khattitoffe.WebBluej.service;
 import java.util.Date;
-
-import com.khattitoffe.WebBluej.repository.CreateUserRepo;
+import com.khattitoffe.WebBluej.repository.DynamoDbRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.*;
@@ -9,21 +8,21 @@ import io.jsonwebtoken.*;
 public class JWTUtil {
 
     @Autowired
-    private CreateUserRepo createUserRepo;
+    private DynamoDbRepo dynamoDB;
 
     private String secretKey="myapplication@4bahujd*(@!6ye9182";
     private long expiration =1000*60*60*12;
 
-    public String generateToken(String username){
+    public String generateToken(String email){
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis()+expiration))
                 .signWith(SignatureAlgorithm.HS256,secretKey)
                 .compact();
     }
 
-    public String extractUsername(String token){
+    public String extractEmail(String token){
         return getClaims(token).getSubject();
     }
 
@@ -35,13 +34,13 @@ public class JWTUtil {
         return getClaims(token).getExpiration().before(new Date());
     }
 
-    public boolean validateToken(String token,String username){
-        return extractUsername(token).equals(username) && !isTokenExpired(token);
+    public boolean validateToken(String token,String email){
+        return extractEmail(token).equals(email) && !isTokenExpired(token);
     }
 
     public boolean validateToken(String token){
-        String username=extractUsername(token);
-        return createUserRepo.existsByusername(username);
+        String email=extractEmail(token);
+        return dynamoDB.userExists(email);
     }
 
 

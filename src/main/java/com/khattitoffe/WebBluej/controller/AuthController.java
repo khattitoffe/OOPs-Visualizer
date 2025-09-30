@@ -2,6 +2,10 @@ package com.khattitoffe.WebBluej.controller;
 import com.khattitoffe.WebBluej.entity.AuthResponse;
 import com.khattitoffe.WebBluej.entity.UserLogin;
 import com.khattitoffe.WebBluej.service.JWTUtil;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,16 +20,23 @@ public class AuthController {
 
     @Autowired
     private JWTUtil jwtUtil;
-
+    
     @PostMapping("/authenticate")
-    public ResponseEntity<AuthResponse> createAuthToken(@RequestBody UserLogin request) {
+    public ResponseEntity<?> createAuthToken(@RequestBody UserLogin request) {
+
+        //System.out.println("")
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        String token = jwtUtil.generateToken(request.getUsername());
-        return ResponseEntity.ok(new AuthResponse(token));
+        String token = jwtUtil.generateToken(request.getEmail());
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        return ResponseEntity.ok().body(response);
+        //return ResponseEntity.ok(new AuthResponse(token));
     }
+
     @GetMapping("/validate-token")
     public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
         try {
@@ -36,7 +47,8 @@ public class AuthController {
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }

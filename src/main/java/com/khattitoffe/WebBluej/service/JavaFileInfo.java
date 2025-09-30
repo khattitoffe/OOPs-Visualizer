@@ -3,7 +3,6 @@ import com.github.javaparser.*;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -11,8 +10,8 @@ import java.util.HashMap;
 
 
 public class JavaFileInfo implements FileInfo{
-    private String fileName;
     private String fileLoaction="E:/Spring Boot/data/src/java/";
+    private File fileDir;
     private File file;
     private CompilationUnit cu;
     private String className=""; // classname
@@ -20,22 +19,41 @@ public class JavaFileInfo implements FileInfo{
     private HashMap<String,String> methodsName=new HashMap<>(); // all methods
     private ArrayList<String> interfaceName=new ArrayList<>(); // all interface it implements
     private HashMap<String,String> objectRefernces=new HashMap<>();
-    private String username;
+    private String email;
+    private ArrayList<String> classFiles = new ArrayList<>();
+
+    public JavaFileInfo(String email){
+        this.email=email;
+        fileDir=new File(fileLoaction+email+"/");
+    }
+
+    public String[] getFileList(){
+        return fileDir.list();
+    }
 
 
-    public JavaFileInfo(String fileName,String username){
-        this.fileName=fileName+".java";
-        this.username=username;
-        file=new File(fileLoaction+username+"/"+this.fileName);
-
+    public void initializeInfo(String className){
+        System.out.println("Inside initialize info"+className);
+        if (!className.endsWith(".java")) {
+            className += ".java";
+        }
+        file=new File(fileLoaction+email+"/"+className);
         initialize();
         extractInfo();
     }
 
 
-    public void initialize(){
+    private void initialize(){
         JavaParser parser = new JavaParser();
 
+        String[] fileList = fileDir.list();
+        if (fileList != null) {
+            for (String fileName : fileList) {
+                if (fileName.endsWith(".java")) {
+                    classFiles.add(fileName.replace(".java", ""));
+                }
+            }
+        }
         try {
             ParseResult<CompilationUnit> result = parser.parse(file);
             if(result.getResult().isPresent())
@@ -51,6 +69,8 @@ public class JavaFileInfo implements FileInfo{
 
     private void extractInfo()
     {
+
+
 
         for (ClassOrInterfaceDeclaration clazz : cu.findAll(ClassOrInterfaceDeclaration.class)) {
 
@@ -68,16 +88,30 @@ public class JavaFileInfo implements FileInfo{
             );
         }
 
-        for (VariableDeclarationExpr varExpr : cu.findAll(VariableDeclarationExpr.class)) {
-            for (VariableDeclarator var : varExpr.getVariables()) {
-                String type = var.getType().asString();
 
-                if (!var.getType().isPrimitiveType()) {
-                   objectRefernces.put(var.getNameAsString(),type);
-                   // System.out.println("Object reference variable found: " + var.getNameAsString() + " of type " + type);
+
+      //  HashMap<String,String> objectRefernces_new=new HashMap<>();
+        for (VariableDeclarationExpr varExpr : cu.findAll(VariableDeclarationExpr.class)) {
+
+            for (VariableDeclarator var : varExpr.getVariables()) {
+
+                if(!var.getType().isPrimitiveType()) {
+                    if (classFiles.contains((var.getType().asString()))) {
+                        System.out.println(var.getType().asString());
+                        objectRefernces.put(var.getNameAsString(),var.getType().asString());
+                    }
                 }
+                /*String type = var.getType().asString();
+
+                // If it's not a primitive type and matches another class in the directory
+                if (!var.getType().isPrimitiveType() && classFiles.contains(type)) {
+                    System.out.println(var.getNameAsString());
+                    objectRefernces.put(var.getNameAsString(), type);
+                }
+                 */
             }
         }
+       // objectRefernces=objectRefernces_new;
 
     }
 

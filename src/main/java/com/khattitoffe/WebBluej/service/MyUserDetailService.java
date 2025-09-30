@@ -1,7 +1,7 @@
 package com.khattitoffe.WebBluej.service;
 
 import com.khattitoffe.WebBluej.entity.UserData;
-import com.khattitoffe.WebBluej.repository.CreateUserRepo;
+import com.khattitoffe.WebBluej.repository.DynamoDbRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,14 +14,14 @@ import java.util.Collections;
 @Service
 public class MyUserDetailService implements UserDetailsService {
     @Autowired
-    CreateUserRepo createUserRepo;
+    DynamoDbRepo dynamoDb;  
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException{
        UserData user;
 
        try {
-          user = createUserRepo.findByusername(username);
+          user = dynamoDb.getUserByEmail(email);
        }
        catch(Exception e)
        {
@@ -29,7 +29,7 @@ public class MyUserDetailService implements UserDetailsService {
        }
 
         return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
+                user.getEmail(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))
         );
